@@ -39,4 +39,35 @@ public class UploadController {
 			}
 		}
 	}
+	
+	@GetMapping("uploadAjax")
+	public void uploadAjax() {
+		log.info("upload Ajax");
+	}
+
+	@PostMapping("uploadAjaxAction")
+	public void uploadAjaxAction(MultipartFile[] uploadFile, Model model) {
+		log.info("upload ajax post....");
+		for(MultipartFile multipartFile: uploadFile) {
+			log.info("-----------------------------------------");
+			log.info("Upload File Name : " + multipartFile.getOriginalFilename());
+			log.info("Upload File Size : " + multipartFile.getSize());
+			
+			String uploadFileName = multipartFile.getOriginalFilename();
+			log.info("path+file name : " + uploadFileName);
+			
+			// IE
+			uploadFileName = uploadFileName.substring(uploadFileName.lastIndexOf("\\") + 1);
+			log.info("only file name : " + uploadFileName);
+			
+			File saveFile = new File(uploadFolder, uploadFileName);
+			
+			try {
+				multipartFile.transferTo(saveFile);
+			} catch (Exception e) {
+				log.error(e.getMessage());
+			}
+		}
+	}
+
 }
