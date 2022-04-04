@@ -27,5 +27,5 @@
 	class="org.springframework.web.multipart.support.StandardServletMultipartResolver">
 	</beans:bean>
 	
-	
+	<context:property-placeholder location="/WEB-INF/system.properties" />
 </beans:beans>
