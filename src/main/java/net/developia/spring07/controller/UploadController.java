@@ -10,13 +10,16 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.extern.log4j.Log4j;
@@ -86,6 +89,7 @@ public class UploadController {
 		
 		List<AttachFileDTO> list = new ArrayList<>();
 		String uploadFolderPath = getFolder();
+
 		File uploadPath = new File(uploadFolder, uploadFolderPath);
 		log.info("uploadPath" + uploadPath);
 		if(!uploadPath.exists()) {
@@ -135,5 +139,29 @@ public class UploadController {
 			}
 		}
 		return new ResponseEntity<>(list, HttpStatus.OK);
+	}
+	
+	
+	@GetMapping("/display")
+	@ResponseBody         
+	public ResponseEntity<byte[]> getFile(String fileName){
+		log.info("filename : " + fileName );
+		
+		File file = new File("c:\\upload\\" + fileName);
+
+		log.info("※※※※※ file : " + file);
+		
+		ResponseEntity<byte[]> result =null;		
+		try {
+			HttpHeaders headers = new HttpHeaders();			
+			
+			headers.add("Content-Type", Files.probeContentType(file.toPath()));
+			
+			result = new ResponseEntity<>(FileCopyUtils.copyToByteArray(file)
+					,headers,HttpStatus.OK);			
+		}catch (Exception e) {
+			e.printStackTrace();			
+		} 	
+		return result;		
 	}
 }

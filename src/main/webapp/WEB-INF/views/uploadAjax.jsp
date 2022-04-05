@@ -1,24 +1,54 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>    
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<c:set var="app" value="${pageContext.request.contextPath}" />
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 <title>Insert title here</title>
+<style>
+.uploadResult {
+	width: 100%;
+	background-color: gray;
+}
+
+.uploadResult ul {
+	display: flex;
+	flex-flow: row;
+	justify-content: center;
+	align-items: center;
+}
+
+.uploadResult ul li {
+	list-style: none;
+	padding: 10px;
+}
+
+.uploadResult ul li img {
+	width: 20px;
+}
+</style>
+
 </head>
 <body>
 
 <div class="uploadDiv">
-	<input type="file" name="uploadFile" multiple="multiple" />
+<input type="file" name="uploadFile" multiple="multiple">
+</div>
+<div class="uploadResult">
+    <ul>
+    
+    </ul>
 </div>
 
 <button id="uploadBtn">Upload</button>
+
 <script type="text/javascript" src="<c:url value="/webjars/jquery/3.6.0/dist/jquery.js" />"></script>
 <script type="text/javascript">
 $(document).ready(function(){
 	let regex = new RegExp("(.*?)\.(exe|sh|zip|alz)");
-	let maxSize = 5242880 ; //5MB
+	let maxSize = 41943040 ; 
 
 	function checkExtension(fileName, fileSize) {
 		if(fileSize >= maxSize){
@@ -33,6 +63,8 @@ $(document).ready(function(){
 		return true;
 	}
 	
+	let cloneObj =$(".uploadDiv").clone();
+
 	$("#uploadBtn").on("click", function(e){
 		let formData = new FormData();
 		let inputFile = $("input[name='uploadFile']");
@@ -56,12 +88,33 @@ $(document).ready(function(){
 			type : 'POST',
 			dataType : 'json',
 			success:function(result) {
-				alert("Uploaded");
+				//alert("Uploaded");
 				console.log(result);
+				showUploadedFile(result);
+				$(".uploadDiv").html(cloneObj.html());
 			}
 		});
 	});
+	let uploadResult = $(".uploadResult ul");
+	function showUploadedFile(uploadResultArr) {
+	    var str="";
+	    $(uploadResultArr).each(function (i,obj) {
+	        if( !obj.image){
+	        	str += "<li><img src='${app}/resources/img/attach.png'>"+ obj.fileName+"</li>";
+	        } else {
+	        	let fileCallpath= encodeURIComponent(obj.uploadPath+"/s_"+obj.uuid+"_"+obj.fileName);
+	            str += "<li><img src='${app}/display?fileName=" + fileCallpath +
+	                "'></li>";
+	        }     
+	    });     
+	    console.log(str);
+	    uploadResult.append(str);
+	}
+
 });
+
+
+
 </script>
 </body>
 </html>
