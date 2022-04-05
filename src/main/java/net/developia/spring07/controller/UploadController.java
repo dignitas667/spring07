@@ -2,6 +2,7 @@ package net.developia.spring07.controller;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -10,6 +11,8 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,6 +22,7 @@ import org.springframework.ui.Model;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -164,4 +168,69 @@ public class UploadController {
 		} 	
 		return result;		
 	}
+	
+/*
+//	다운로드는 잘 되지만 IE에서는 한글 파일명에서 문제 발생	
+	@GetMapping(value = "/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+	@ResponseBody
+	public ResponseEntity<Resource> downloadFile(String fileName){
+		log.info("download file: " + fileName);
+		
+		//리소스 객체에 파일 담기
+		Resource resource = new FileSystemResource("c:\\upload\\" + fileName);
+		log.info("resource: " + resource);
+		//파일 이름 저장
+		String resourceName = resource.getFilename();
+		
+		//헤더에 파일이름 저장
+		HttpHeaders headers = new HttpHeaders();
+		try{
+			headers.add("Content-Disposition", 
+					"attachment; filename=" + 
+							new String(resourceName.getBytes("UTF-8") ,	"ISO-8859-1")
+					);			
+		}catch (Exception e) {
+			e.printStackTrace();
+		}//end try
+		
+		return new ResponseEntity<Resource>(resource,headers,HttpStatus.OK);
+	
+	} 
+*/
+	// IE 한글 문제 처리
+	@GetMapping(value = "/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+	@ResponseBody
+	public ResponseEntity<Resource> downloadFile(
+			@RequestHeader("User-Agent") String userAgent,
+			String fileName){
+		
+		log.info("download file: " + fileName);
+		
+		Resource resource = new FileSystemResource("c:\\upload\\" + fileName);
+		log.info("resource: " + resource);
+		String resourceName = resource.getFilename();
+		HttpHeaders headers = new HttpHeaders();
+		
+		try{
+			String downloadName = null;
+			
+			if (userAgent.contains("Trident")) {
+				log.info("IE browser");
+				downloadName = URLEncoder.encode(resourceName, "UTF-8").replaceAll("\\+", " ");
+			} else if (userAgent.contains("Edge")) {
+				log.info("Edge browser");
+				downloadName = URLEncoder.encode(resourceName, "UTF-8");
+				log.info("Edge name : " + downloadName);
+			} else {
+				log.info("Chrome browser");
+				downloadName = new String(resourceName.getBytes("UTF-8"), "ISO-8859-1");
+			}
+			headers.add("Content-Disposition", 
+					"attachment; filename=" + downloadName); 
+		} catch (Exception e) {
+			e.printStackTrace();
+		} //end try
+		
+		return new ResponseEntity<Resource>(resource, headers, HttpStatus.OK);
+	} 
 }

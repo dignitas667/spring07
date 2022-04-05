@@ -99,16 +99,20 @@ $(document).ready(function(){
 	function showUploadedFile(uploadResultArr) {
 	    var str="";
 	    $(uploadResultArr).each(function (i,obj) {
-	        if( !obj.image){
-	        	str += "<li><img src='${app}/resources/img/attach.png'>"+ obj.fileName+"</li>";
-	        } else {
-	        	let fileCallpath= encodeURIComponent(obj.uploadPath+"/s_"+obj.uuid+"_"+obj.fileName);
-	            str += "<li><img src='${app}/display?fileName=" + fileCallpath +
-	                "'></li>";
-	        }     
-	    });     
+            if( !obj.image){ 
+            	let fileCallpath= obj.uploadPath+"/"+obj.uuid+"_"+obj.fileName;
+            
+           		str += "<li><a href='${app}/download?fileName=" + fileCallpath + "'>"  +
+            		"<img src='${app}/resources/img/attach.png'>" + obj.fileName+"</li>";
+            }else{
+            	let fileCallpath=encodeURIComponent(obj.uploadPath+"/s_"+obj.uuid+"_"+obj.fileName);
+            	str += "<li><img src='/display?fileName=" + fileCallpath+
+          			"'></li>";
+            }            
+        });    
 	    console.log(str);
 	    uploadResult.append(str);
+
 	}
 
 });
