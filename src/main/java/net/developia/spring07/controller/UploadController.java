@@ -4,10 +4,15 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import lombok.extern.log4j.Log4j;
 import net.coobird.thumbnailator.Thumbnailator;
+import net.developia.spring07.domain.AttachFileDTO;
 
 @Controller
 @Log4j
@@ -74,17 +80,22 @@ public class UploadController {
 	}//end check...
 
 	
-	@PostMapping("uploadAjaxAction")
-	public void uploadAjaxAction(MultipartFile[] uploadFile, Model model) {
+	@PostMapping(value = "uploadAjaxAction", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<List<AttachFileDTO>> uploadAjaxAction(MultipartFile[] uploadFile, Model model) {
 		log.info("upload ajax post....");
 		
-		File uploadPath = new File(uploadFolder,getFolder());
+		List<AttachFileDTO> list = new ArrayList<>();
+		String uploadFolderPath = getFolder();
+		File uploadPath = new File(uploadFolder, uploadFolderPath);
 		log.info("uploadPath" + uploadPath);
 		if(!uploadPath.exists()) {
 			uploadPath.mkdirs();
 		}
 		
 		for(MultipartFile multipartFile: uploadFile) {
+			AttachFileDTO attachDTO = new AttachFileDTO();
+
+			
 			log.info("-----------------------------------------");
 			log.info("Upload File Name : " + multipartFile.getOriginalFilename());
 			log.info("Upload File Size : " + multipartFile.getSize());
@@ -96,9 +107,12 @@ public class UploadController {
 			uploadFileName = uploadFileName.substring(uploadFileName.lastIndexOf("\\") + 1);
 			log.info("only file name : " + uploadFileName);
 			
+			attachDTO.setFileName(uploadFileName); 
 			
 			UUID uuid = UUID.randomUUID();
 			uploadFileName = uuid.toString() + "_" + uploadFileName;
+			attachDTO.setUuid(uuid.toString()); 
+			attachDTO.setUploadPath(uploadFolderPath); 
 			
 			// File saveFile = new File(uploadFolder, uploadFileName);
 			File saveFile = new File(uploadPath, uploadFileName);
@@ -108,16 +122,18 @@ public class UploadController {
 				log.info("contentType : " + Files.probeContentType(saveFile.toPath()));
 
 				if( checkImageType(saveFile)) {
+					attachDTO.setImage(true);
 					FileOutputStream thumnail =  //파일생성
 							new FileOutputStream(new File(uploadPath,"s_"+uploadFileName));
 					Thumbnailator.createThumbnail(
 							multipartFile.getInputStream(),thumnail, 100, 100);
 					thumnail.close(); //파일 닫기					
 				}//end if
-
+				list.add(attachDTO);
 			} catch (Exception e) {
 				log.error(e.getMessage());
 			}
 		}
+		return new ResponseEntity<>(list, HttpStatus.OK);
 	}
 }
