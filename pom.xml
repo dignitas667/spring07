@@ -244,6 +244,13 @@
 		    <artifactId>commons-fileupload</artifactId>
 		    <version>1.4</version>
 		</dependency> -->
+		
+		<!-- https://mvnrepository.com/artifact/net.coobird/thumbnailator -->
+		<dependency>
+		    <groupId>net.coobird</groupId>
+		    <artifactId>thumbnailator</artifactId>
+		    <version>0.4.17</version>
+		</dependency>
 
 	</dependencies>
     <build>

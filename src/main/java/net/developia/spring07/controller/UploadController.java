@@ -1,9 +1,11 @@
 package net.developia.spring07.controller;
 
 import java.io.File;
-
-import javax.servlet.annotation.MultipartConfig;
-import javax.servlet.annotation.WebServlet;
+import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.extern.log4j.Log4j;
+import net.coobird.thumbnailator.Thumbnailator;
 
 @Controller
 @Log4j
@@ -48,9 +51,39 @@ public class UploadController {
 		log.info("upload Ajax");
 	}
 
+	
+	//폴더 이름 처리
+	private String getFolder() {   //날짜 구분자 대소문자 구별
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		Date date = new Date();
+		String str = sdf.format(date);
+		return str.replace("-", File.separator);//OS구별없이 구분자로 대체		
+	}//end getFolder()
+
+	//이미지 파일 검사
+	private boolean checkImageType(File file) {
+		try { //파일 타입 체크
+			String contenType = Files.probeContentType(file.toPath());
+			log.info(contenType);
+			return contenType.startsWith("image");			
+		}catch (Exception e) {
+			e.printStackTrace();		
+		}//end try
+		
+		return false;		
+	}//end check...
+
+	
 	@PostMapping("uploadAjaxAction")
 	public void uploadAjaxAction(MultipartFile[] uploadFile, Model model) {
 		log.info("upload ajax post....");
+		
+		File uploadPath = new File(uploadFolder,getFolder());
+		log.info("uploadPath" + uploadPath);
+		if(!uploadPath.exists()) {
+			uploadPath.mkdirs();
+		}
+		
 		for(MultipartFile multipartFile: uploadFile) {
 			log.info("-----------------------------------------");
 			log.info("Upload File Name : " + multipartFile.getOriginalFilename());
@@ -63,14 +96,28 @@ public class UploadController {
 			uploadFileName = uploadFileName.substring(uploadFileName.lastIndexOf("\\") + 1);
 			log.info("only file name : " + uploadFileName);
 			
-			File saveFile = new File(uploadFolder, uploadFileName);
+			
+			UUID uuid = UUID.randomUUID();
+			uploadFileName = uuid.toString() + "_" + uploadFileName;
+			
+			// File saveFile = new File(uploadFolder, uploadFileName);
+			File saveFile = new File(uploadPath, uploadFileName);
 			
 			try {
 				multipartFile.transferTo(saveFile);
+				log.info("contentType : " + Files.probeContentType(saveFile.toPath()));
+
+				if( checkImageType(saveFile)) {
+					FileOutputStream thumnail =  //파일생성
+							new FileOutputStream(new File(uploadPath,"s_"+uploadFileName));
+					Thumbnailator.createThumbnail(
+							multipartFile.getInputStream(),thumnail, 100, 100);
+					thumnail.close(); //파일 닫기					
+				}//end if
+
 			} catch (Exception e) {
 				log.error(e.getMessage());
 			}
 		}
 	}
-
 }
