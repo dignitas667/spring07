@@ -17,6 +17,22 @@
 <script type="text/javascript" src="<c:url value="/webjars/jquery/3.6.0/dist/jquery.js" />"></script>
 <script type="text/javascript">
 $(document).ready(function(){
+	let regex = new RegExp("(.*?)\.(exe|sh|zip|alz)");
+	let maxSize = 5242880 ; //5MB
+
+	function checkExtension(fileName, fileSize) {
+		if(fileSize >= maxSize){
+			alert("파일 사이즈 초과");
+			return false;
+		}//end if
+
+		if(regex.test(fileName)){
+			alert("해당 종류 파일 업로드 불가");
+			return false;
+		}//end if
+		return true;
+	}
+	
 	$("#uploadBtn").on("click", function(e){
 		let formData = new FormData();
 		let inputFile = $("input[name='uploadFile']");
@@ -24,6 +40,11 @@ $(document).ready(function(){
 		console.log(files);
 		
 		for(let i=0; i < files.length; i++) {
+			//파일 종류 및 크기 체크
+			if( !checkExtension(files[i].name, files[i].size ) ){
+				return false;
+			}
+
 			formData.append("uploadFile", files[i]);	
 		}		
 		
